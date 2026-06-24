@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>TUDO É QUÍMICO · Tabela Periódica Interativa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, #102b40, #030e17);
+            min-height: 100vh;
+            padding: 16px;
+            color: #edf4ff;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" opacity="0.03"><circle cx="40" cy="40" r="8" fill="%237aa2f7"/><circle cx="160" cy="160" r="12" fill="%23bb9af7"/><circle cx="130" cy="70" r="6" fill="%23f7768e"/><circle cx="80" cy="150" r="10" fill="%237aa2f7"/><path d="M40 40 L160 160 M130 70 L80 150" stroke="%237aa2f7" stroke-width="1.5" opacity="0.2"/></svg>');
+            background-size: 200px 200px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        .hero {
+            background: rgba(8, 28, 47, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(122, 162, 247, 0.3);
+            border-radius: 60px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 20px 40px -15px #000;
+        }
+
+        .atomo-giratorio {
+            filter: drop-shadow(0 0 20px #3f8aff);
+            background: #0c283f;
+            border-radius: 50%;
+            width: clamp(70px, 15vw, 90px);
+            height: clamp(70px, 15vw, 90px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #7aa2f7;
+            flex-shrink: 0;
+        }
+
+        .atomo-giratorio img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .titulo-principal {
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .titulo-principal h1 {
+            font-size: clamp(2rem, 8vw, 3.8rem);
+            font-weight: 800;
+            background: linear-gradient(145deg, #c8e0ff, #cbb2ff, #ffb4c1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .badge-atualizacao {
+            background: #143650;
+            border-radius: 60px;
+            padding: 6px 18px;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            border: 1px solid #3f78a8;
+            color: #b4dcff;
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .creditos {
+            background: #0b253c;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            border: 1px solid #37658b;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .creditos strong {
+            color: #d3b7ff;
+            font-size: 1.1em;
+        }
+
+        .planilha-status {
+            display: flex;
+            gap: 15px 30px;
+            flex-wrap: wrap;
+            background: #0a1d30c0;
+            backdrop-filter: blur(8px);
+            padding: 14px 24px;
+            border-radius: 60px;
+            margin-bottom: 25px;
+            border: 1px solid #3e6f9b;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .info-planilha {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .badge-planilha {
+            background: #174267;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 500;
+            border-left: 5px solid #7aa2f7;
+            font-size: 0.9rem;
+        }
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #23598a;
+            border-top-color: #a6c9ff;
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .periodic-wrapper {
+            background: #0a1f32b3;
+            backdrop-filter: blur(6px);
+            border-radius: 50px;
+            padding: 20px 12px;
+            border: 1px solid #3e6d99;
+            box-shadow: 0 25px 45px -20px black;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, minmax(48px, 1fr));
+            gap: 4px;
+            min-width: 700px;
+        }
+
+        .element-card {
+            background: linear-gradient(145deg, #1f3a54, #102b41);
+            border: 2px solid #2f5580;
+            border-radius: 16px;
+            padding: 8px 2px 4px 2px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.15s ease;
+            box-shadow: 0 5px 0 #0a1a28;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            aspect-ratio: 1 / 1.1;
+        }
+
+        @media (min-width: 1200px) {
+            .element-card { padding: 12px 4px 8px; border-radius: 20px; }
+        }
+
+        .element-card:hover {
+            transform: translateY(-4px);
+            border-color: #7aa2f7;
+            background: #234e74;
+            box-shadow: 0 12px 18px -8px #1a4970, 0 0 0 2px #8bb3ff inset;
+        }
+
+        /* --- ESTILO APENAS PARA ELEMENTOS COM DADOS --- */
+        .element-card.com-dados {
+            border-left: 4px solid #f7c46e;
+            border-right: 2px solid #f0b347;
+            background: linear-gradient(145deg, #254d6e, #15334d);
+        }
+        /* ------------------------------------------ */
+
+        .element-number {
+            font-size: clamp(0.55rem, 1.8vw, 0.7rem);
+            color: #98bee6;
+            font-weight: 600;
+        }
+
+        .element-symbol {
+            font-size: clamp(1rem, 4vw, 1.8rem);
+            font-weight: 800;
+            line-height: 1.2;
+            background: linear-gradient(135deg, #ffffff, #bdd6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 4px #00000070);
+        }
+
+        .element-name {
+            font-size: clamp(0.45rem, 1.5vw, 0.6rem);
+            font-weight: 600;
+            background: #173857;
+            padding: 2px 6px;
+            border-radius: 30px;
+            color: #cae2ff;
+            max-width: 95%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty-cell {
+            background: transparent;
+            border: 1px dashed #2f557b60;
+            border-radius: 12px;
+            aspect-ratio: 1/1;
+        }
+
+        .legenda {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 12px 16px;
+            background: #08202fc0;
+            border-radius: 40px;
+            margin-top: 20px;
+            justify-content: center;
+            border: 1px solid #446d95;
+        }
+        .legenda-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+        }
+        .marcador {
+            width: 22px;
+            height: 22px;
+            border-radius: 8px;
+            background: #1b3f5e;
+            border: 2px solid #638bb7;
+        }
+        .marcador.amarelo { background: #f0b347; border-color: #feda7a; }
+        .marcador.azul { background: #2f5f92; border-color: #7aa2f7; }
+
+        dialog {
+            background: rgba(6, 22, 38, 0.98);
+            backdrop-filter: blur(30px);
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
+            margin: 0;
+            color: white;
+            box-shadow: none;
+            animation: fadeIn 0.3s ease-out;
+            overflow-y: auto;
+        }
+
+        dialog::backdrop {
+            background: #000000f0;
+            backdrop-filter: blur(8px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-full {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            padding: 20px 30px 30px;
+            overflow-y: auto;
+        }
+
+        .modal-header-full {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #3b6990;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .modal-titulo-full {
+            font-size: clamp(2rem, 6vw, 3.2rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffdbb5, #cbb3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .fechar-modal-full {
+            background: #1f4569;
+            border: 2px solid #7aa2f7;
+            border-radius: 60px;
+            padding: 12px 32px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .fechar-modal-full:hover {
+            background: #2f5f92;
+            border-color: #bb9af7;
+            transform: scale(1.02);
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 30px;
+            flex: 1;
+            min-height: 500px;
+        }
+
+        @media (max-width: 900px) {
+            .modal-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+        }
+
+        .coluna-esquerda {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .propriedades-full {
+            display: flex;
+            gap: 20px;
+            background: #0c2943;
+            border-radius: 40px;
+            padding: 24px 20px;
+            border: 2px solid #4f7eb3;
+            flex-wrap: wrap;
+        }
+        .prop-item {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        .prop-label {
+            font-size: 1rem;
+            text-transform: uppercase;
+            color: #b1d0f0;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .prop-valor {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(145deg, #fff8e7, #c3d9ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        .prop-unidade {
+            font-size: 1.2rem;
+            color: #9cb9dd;
+            margin-left: 8px;
+        }
+
+        .imagem-full {
+            background: #1b3753;
+            border-radius: 40px;
+            padding: 28px;
+            border: 2px solid #5380b0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 260px;
+            flex: 1;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .imagem-full:hover {
+            transform: scale(1.01);
+            box-shadow: 0 0 0 3px #7aa2f7, 0 10px 25px -5px black;
+        }
+        .imagem-full img {
+            max-width: 100%;
+            max-height: 280px;
+            border-radius: 32px;
+            box-shadow: 0 20px 30px -5px black;
+            border: 3px solid #9ac0f0;
+            object-fit: contain;
+            pointer-events: auto;
+        }
+        .placeholder-img-full {
+            width: 100%;
+            min-height: 220px;
+            background: #143853;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            border: 3px dashed #558bc2;
+            color: #89b5e3;
+            cursor: default;
+        }
+
+        .coluna-direita {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            height: 100%;
+        }
+
+        .video-player-full {
+            background: #0a253c;
+            border-radius: 40px;
+            padding: 20px;
+            border: 2px solid #4f7eb3;
+            flex: 1;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 28px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            height: 0;
+            background: black;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .video-controls {
+            display: flex;
+            justify-content: flex-end;
+            padding: 12px 16px;
+            background: linear-gradient(0deg, #071a2b, transparent);
+            gap: 12px;
+        }
+
+        .fullscreen-btn {
+            background: #1f4569;
+            border: 1px solid #7aa2f7;
+            border-radius: 40px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .fullscreen-btn:hover {
+            background: #2f5f92;
+            transform: scale(1.02);
+            border-color: #bb9af7;
+        }
+
+        .sem-video {
+            background: #1d3853;
+            border-radius: 40px;
+            padding: 40px 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            color: #799fc7;
+            border: 2px dashed #4f7eb3;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .botao-abrir-externo {
+            background: #2b5a88;
+            border: 2px solid #7aa2f7;
+            border-radius: 60px;
+            padding: 14px 32px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .botao-abrir-externo:hover {
+            background: #3f7fb0;
+            transform: scale(1.02);
+            border-color: #bb9af7;
+        }
+        .aviso-canva {
+            font-size: 0.85rem;
+            color: #f0b347;
+            margin-top: 8px;
+        }
+
+        .descricao-full {
+            background: #0c273f;
+            border-radius: 40px;
+            padding: 32px;
+            font-size: 1.3rem;
+            line-height: 1.7;
+            border-left: 8px solid #7aa2f7;
+            max-height: 350px;
+            overflow-y: auto;
+            color: #d3e6ff;
+            flex: 1;
+            min-height: 200px;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: #6889ab;
+            padding: 16px;
+            background: #071e30b0;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        .modal-imagem {
+            background: rgba(0, 0, 0, 0.96);
+            backdrop-filter: blur(20px);
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
+            margin: 0;
+        }
+        .modal-imagem::backdrop {
+            background: #000000dd;
+        }
+        .zoom-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+        }
+        .zoom-container img {
+            max-width: 95vw;
+            max-height: 85vh;
+            object-fit: contain;
+            border-radius: 32px;
+            border: 4px solid #7aa2f7;
+            box-shadow: 0 0 50px rgba(122, 162, 247, 0.5);
+        }
+        .fechar-zoom {
+            position: absolute;
+            top: 30px;
+            right: 50px;
+            background: #1f4569;
+            border: 2px solid #7aa2f7;
+            border-radius: 60px;
+            padding: 12px 32px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            z-index: 100;
+        }
+        .fechar-zoom:hover {
+            background: #c23b3b;
+            border-color: #ffb4b4;
+        }
+        @media (max-width: 700px) {
+            .fechar-zoom { top: 20px; right: 20px; padding: 8px 20px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <div class="atomo-giratorio">
+            <img src="https://i.imgur.com/QlcYp26.png" alt="Logo Tudo é Químico">
+        </div>
+        <div class="titulo-principal">
+            <h1>TUDO É QUÍMICO</h1>
+            <span class="badge-atualizacao"><span>🧪 tabela interativa</span> <span>⚡ 118 elementos</span></span>
+        </div>
+        <div class="creditos">
+            <div><strong>desenvolvido por Pedro Cortez</strong></div>
+            <div style="font-size:0.8rem;">⚛️ dados da planilha</div>
+        </div>
+    </div>
+
+    <div class="planilha-status" id="planilhaStatus">
+        <div class="info-planilha">
+            <span class="badge-planilha">📊 planilha: <span id="planilhaNome">tudo-e-quimico</span></span>
+            <span id="contadorRegistros" class="badge-planilha">⏳ carregando...</span>
+        </div>
+        <div id="loadingIndicator" class="loading-spinner"></div>
+    </div>
+
+    <div class="periodic-wrapper">
+        <div class="periodic-table" id="periodicTableGrid"></div>
+        <div class="legenda">
+            <div class="legenda-item"><span class="marcador azul"></span> elemento padrão</div>
+            <div class="legenda-item"><span class="marcador amarelo"></span> com dados (imagem/vídeo)</div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        🔬 clique em qualquer elemento • player de vídeo em tela cheia • clique na imagem para ampliar
+    </div>
+</div>
+
+<dialog id="elementoModal">
+    <div class="modal-full" id="modalFullContent"></div>
+</dialog>
+
+<dialog id="zoomImageModal" class="modal-imagem">
+    <div class="zoom-container">
+        <button class="fechar-zoom" id="closeZoomBtn">✕ FECHAR</button>
+        <img id="zoomImage" src="" alt="Zoom da imagem">
+    </div>
+</dialog>
+
+<script>
+    (function() {
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwQ8arh7FlWWyOoQrv00otN2xC5U-hUq_z80tZDy26OstF4tSMXs8yALJInQkmClY4A/exec';
+
+        const massasAtomicas = {
+            1: "1.008", 2: "4.0026", 3: "6.94", 4: "9.0122", 5: "10.81", 6: "12.011", 7: "14.007", 8: "15.999", 9: "18.998", 10: "20.180",
+            11: "22.990", 12: "24.305", 13: "26.982", 14: "28.085", 15: "30.974", 16: "32.06", 17: "35.45", 18: "39.948", 19: "39.098", 20: "40.078",
+            21: "44.956", 22: "47.867", 23: "50.942", 24: "51.996", 25: "54.938", 26: "55.845", 27: "58.933", 28: "58.693", 29: "63.546", 30: "65.38",
+            31: "69.723", 32: "72.63", 33: "74.922", 34: "78.96", 35: "79.904", 36: "83.798", 37: "85.468", 38: "87.62", 39: "88.906", 40: "91.224",
+            41: "92.906", 42: "95.95", 43: "98", 44: "101.07", 45: "102.91", 46: "106.42", 47: "107.87", 48: "112.41", 49: "114.82", 50: "118.71",
+            51: "121.76", 52: "127.60", 53: "126.90", 54: "131.29", 55: "132.91", 56: "137.33", 57: "138.91", 58: "140.12", 59: "140.91", 60: "144.24",
+            61: "145", 62: "150.36", 63: "151.96", 64: "157.25", 65: "158.93", 66: "162.50", 67: "164.93", 68: "167.26", 69: "168.93", 70: "173.04",
+            71: "174.97", 72: "178.49", 73: "180.95", 74: "183.84", 75: "186.21", 76: "190.23", 77: "192.22", 78: "195.08", 79: "196.97", 80: "200.59",
+            81: "204.38", 82: "207.2", 83: "208.98", 84: "209", 85: "210", 86: "222", 87: "223", 88: "226", 89: "227", 90: "232.04",
+            91: "231.04", 92: "238.03", 93: "237", 94: "244", 95: "243", 96: "247", 97: "247", 98: "251", 99: "252", 100: "257",
+            101: "258", 102: "259", 103: "266", 104: "267", 105: "268", 106: "269", 107: "270", 108: "277", 109: "278", 110: "281",
+            111: "282", 112: "285", 113: "286", 114: "289", 115: "290", 116: "293", 117: "294", 118: "294"
+        };
+
+        const elementosCompletos = [
+            {num:1, simbolo:"H", nome:"Hidrogênio", grupo:1, periodo:1},{num:2, simbolo:"He", nome:"Hélio", grupo:18, periodo:1},{num:3, simbolo:"Li", nome:"Lítio", grupo:1, periodo:2},{num:4, simbolo:"Be", nome:"Berílio", grupo:2, periodo:2},{num:5, simbolo:"B", nome:"Boro", grupo:13, periodo:2},{num:6, simbolo:"C", nome:"Carbono", grupo:14, periodo:2},{num:7, simbolo:"N", nome:"Nitrogênio", grupo:15, periodo:2},{num:8, simbolo:"O", nome:"Oxigênio", grupo:16, periodo:2},{num:9, simbolo:"F", nome:"Flúor", grupo:17, periodo:2},{num:10, simbolo:"Ne", nome:"Neônio", grupo:18, periodo:2},
+            {num:11, simbolo:"Na", nome:"Sódio", grupo:1, periodo:3},{num:12, simbolo:"Mg", nome:"Magnésio", grupo:2, periodo:3},{num:13, simbolo:"Al", nome:"Alumínio", grupo:13, periodo:3},{num:14, simbolo:"Si", nome:"Silício", grupo:14, periodo:3},{num:15, simbolo:"P", nome:"Fósforo", grupo:15, periodo:3},{num:16, simbolo:"S", nome:"Enxofre", grupo:16, periodo:3},{num:17, simbolo:"Cl", nome:"Cloro", grupo:17, periodo:3},{num:18, simbolo:"Ar", nome:"Argônio", grupo:18, periodo:3},
+            {num:19, simbolo:"K", nome:"Potássio", grupo:1, periodo:4},{num:20, simbolo:"Ca", nome:"Cálcio", grupo:2, periodo:4},{num:21, simbolo:"Sc", nome:"Escândio", grupo:3, periodo:4},{num:22, simbolo:"Ti", nome:"Titânio", grupo:4, periodo:4},{num:23, simbolo:"V", nome:"Vanádio", grupo:5, periodo:4},{num:24, simbolo:"Cr", nome:"Cromo", grupo:6, periodo:4},{num:25, simbolo:"Mn", nome:"Manganês", grupo:7, periodo:4},{num:26, simbolo:"Fe", nome:"Ferro", grupo:8, periodo:4},{num:27, simbolo:"Co", nome:"Cobalto", grupo:9, periodo:4},{num:28, simbolo:"Ni", nome:"Níquel", grupo:10, periodo:4},{num:29, simbolo:"Cu", nome:"Cobre", grupo:11, periodo:4},{num:30, simbolo:"Zn", nome:"Zinco", grupo:12, periodo:4},{num:31, simbolo:"Ga", nome:"Gálio", grupo:13, periodo:4},{num:32, simbolo:"Ge", nome:"Germânio", grupo:14, periodo:4},{num:33, simbolo:"As", nome:"Arsênio", grupo:15, periodo:4},{num:34, simbolo:"Se", nome:"Selênio", grupo:16, periodo:4},{num:35, simbolo:"Br", nome:"Bromo", grupo:17, periodo:4},{num:36, simbolo:"Kr", nome:"Criptônio", grupo:18, periodo:4},
+            {num:37, simbolo:"Rb", nome:"Rubídio", grupo:1, periodo:5},{num:38, simbolo:"Sr", nome:"Estrôncio", grupo:2, periodo:5},{num:39, simbolo:"Y", nome:"Ítrio", grupo:3, periodo:5},{num:40, simbolo:"Zr", nome:"Zircônio", grupo:4, periodo:5},{num:41, simbolo:"Nb", nome:"Nióbio", grupo:5, periodo:5},{num:42, simbolo:"Mo", nome:"Molibdênio", grupo:6, periodo:5},{num:43, simbolo:"Tc", nome:"Tecnécio", grupo:7, periodo:5},{num:44, simbolo:"Ru", nome:"Rutênio", grupo:8, periodo:5},{num:45, simbolo:"Rh", nome:"Ródio", grupo:9, periodo:5},{num:46, simbolo:"Pd", nome:"Paládio", grupo:10, periodo:5},{num:47, simbolo:"Ag", nome:"Prata", grupo:11, periodo:5},{num:48, simbolo:"Cd", nome:"Cádmio", grupo:12, periodo:5},{num:49, simbolo:"In", nome:"Índio", grupo:13, periodo:5},{num:50, simbolo:"Sn", nome:"Estanho", grupo:14, periodo:5},{num:51, simbolo:"Sb", nome:"Antimônio", grupo:15, periodo:5},{num:52, simbolo:"Te", nome:"Telúrio", grupo:16, periodo:5},{num:53, simbolo:"I", nome:"Iodo", grupo:17, periodo:5},{num:54, simbolo:"Xe", nome:"Xenônio", grupo:18, periodo:5},
+            {num:55, simbolo:"Cs", nome:"Césio", grupo:1, periodo:6},{num:56, simbolo:"Ba", nome:"Bário", grupo:2, periodo:6},{num:57, simbolo:"La", nome:"Lantânio", grupo:3, periodo:6},{num:58, simbolo:"Ce", nome:"Cério", grupo:4, periodo:6},{num:59, simbolo:"Pr", nome:"Praseodímio", grupo:5, periodo:6},{num:60, simbolo:"Nd", nome:"Neodímio", grupo:6, periodo:6},{num:61, simbolo:"Pm", nome:"Promécio", grupo:7, periodo:6},{num:62, simbolo:"Sm", nome:"Samário", grupo:8, periodo:6},{num:63, simbolo:"Eu", nome:"Európio", grupo:9, periodo:6},{num:64, simbolo:"Gd", nome:"Gadolínio", grupo:10, periodo:6},{num:65, simbolo:"Tb", nome:"Térbio", grupo:11, periodo:6},{num:66, simbolo:"Dy", nome:"Disprósio", grupo:12, periodo:6},{num:67, simbolo:"Ho", nome:"Hólmio", grupo:13, periodo:6},{num:68, simbolo:"Er", nome:"Érbio", grupo:14, periodo:6},{num:69, simbolo:"Tm", nome:"Túlio", grupo:15, periodo:6},{num:70, simbolo:"Yb", nome:"Itérbio", grupo:16, periodo:6},{num:71, simbolo:"Lu", nome:"Lutécio", grupo:17, periodo:6},{num:72, simbolo:"Hf", nome:"Háfnio", grupo:4, periodo:6},{num:73, simbolo:"Ta", nome:"Tântalo", grupo:5, periodo:6},{num:74, simbolo:"W", nome:"Tungstênio", grupo:6, periodo:6},{num:75, simbolo:"Re", nome:"Rênio", grupo:7, periodo:6},{num:76, simbolo:"Os", nome:"Ósmio", grupo:8, periodo:6},{num:77, simbolo:"Ir", nome:"Irídio", grupo:9, periodo:6},{num:78, simbolo:"Pt", nome:"Platina", grupo:10, periodo:6},{num:79, simbolo:"Au", nome:"Ouro", grupo:11, periodo:6},{num:80, simbolo:"Hg", nome:"Mercúrio", grupo:12, periodo:6},{num:81, simbolo:"Tl", nome:"Tálio", grupo:13, periodo:6},{num:82, simbolo:"Pb", nome:"Chumbo", grupo:14, periodo:6},{num:83, simbolo:"Bi", nome:"Bismuto", grupo:15, periodo:6},{num:84, simbolo:"Po", nome:"Polônio", grupo:16, periodo:6},{num:85, simbolo:"At", nome:"Astato", grupo:17, periodo:6},{num:86, simbolo:"Rn", nome:"Radônio", grupo:18, periodo:6},{num:87, simbolo:"Fr", nome:"Frâncio", grupo:1, periodo:7},{num:88, simbolo:"Ra", nome:"Rádio", grupo:2, periodo:7},{num:89, simbolo:"Ac", nome:"Actínio", grupo:3, periodo:7},{num:90, simbolo:"Th", nome:"Tório", grupo:4, periodo:7},{num:91, simbolo:"Pa", nome:"Protactínio", grupo:5, periodo:7},{num:92, simbolo:"U", nome:"Urânio", grupo:6, periodo:7},{num:93, simbolo:"Np", nome:"Netúnio", grupo:7, periodo:7},{num:94, simbolo:"Pu", nome:"Plutônio", grupo:8, periodo:7},{num:95, simbolo:"Am", nome:"Amerício", grupo:9, periodo:7},{num:96, simbolo:"Cm", nome:"Cúrio", grupo:10, periodo:7},{num:97, simbolo:"Bk", nome:"Berquélio", grupo:11, periodo:7},{num:98, simbolo:"Cf", nome:"Califórnio", grupo:12, periodo:7},{num:99, simbolo:"Es", nome:"Einstênio", grupo:13, periodo:7},{num:100, simbolo:"Fm", nome:"Férmio", grupo:14, periodo:7},{num:101, simbolo:"Md", nome:"Mendelévio", grupo:15, periodo:7},{num:102, simbolo:"No", nome:"Nobélio", grupo:16, periodo:7},{num:103, simbolo:"Lr", nome:"Laurêncio", grupo:17, periodo:7},{num:104, simbolo:"Rf", nome:"Rutherfórdio", grupo:4, periodo:7},{num:105, simbolo:"Db", nome:"Dúbnio", grupo:5, periodo:7},{num:106, simbolo:"Sg", nome:"Seabórgio", grupo:6, periodo:7},{num:107, simbolo:"Bh", nome:"Bóhrio", grupo:7, periodo:7},{num:108, simbolo:"Hs", nome:"Hássio", grupo:8, periodo:7},{num:109, simbolo:"Mt", nome:"Meitnério", grupo:9, periodo:7},{num:110, simbolo:"Ds", nome:"Darmstádtio", grupo:10, periodo:7},{num:111, simbolo:"Rg", nome:"Roentgênio", grupo:11, periodo:7},{num:112, simbolo:"Cn", nome:"Copernício", grupo:12, periodo:7},{num:113, simbolo:"Nh", nome:"Nihônio", grupo:13, periodo:7},{num:114, simbolo:"Fl", nome:"Fleróvio", grupo:14, periodo:7},{num:115, simbolo:"Mc", nome:"Moscóvio", grupo:15, periodo:7},{num:116, simbolo:"Lv", nome:"Livermório", grupo:16, periodo:7},{num:117, simbolo:"Ts", nome:"Tenessino", grupo:17, periodo:7},{num:118, simbolo:"Og", nome:"Oganessônio", grupo:18, periodo:7}
+        ];
+
+        let registrosMap = new Map();
+        let registrosCount = 0;
+        const gridEl = document.getElementById('periodicTableGrid');
+        const contadorSpan = document.getElementById('contadorRegistros');
+        const loadingEl = document.getElementById('loadingIndicator');
+        const modal = document.getElementById('elementoModal');
+        const modalContent = document.getElementById('modalFullContent');
+        const zoomModal = document.getElementById('zoomImageModal');
+        const zoomImage = document.getElementById('zoomImage');
+        const closeZoomBtn = document.getElementById('closeZoomBtn');
+
+        function abrirZoomImagem(url) {
+            if (!url) return;
+            zoomImage.src = url;
+            zoomModal.showModal();
+        }
+        closeZoomBtn.addEventListener('click', () => zoomModal.close());
+        zoomModal.addEventListener('click', (e) => { if (e.target === zoomModal) zoomModal.close(); });
+
+        function isCanvaLink(url) {
+            if (!url) return false;
+            const urlLower = url.toLowerCase();
+            return urlLower.includes('canva.com');
+        }
+
+        function getYouTubeEmbedUrl(url) {
+            if (!url) return null;
+            const patterns = [
+                /(?:youtube\.com\/watch\?v=)([\w-]{11})/i,
+                /(?:youtube\.com\/embed\/)([\w-]{11})/i,
+                /(?:youtu\.be\/)([\w-]{11})/i,
+                /(?:youtube\.com\/shorts\/)([\w-]{11})/i
+            ];
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return `https://www.youtube.com/embed/${match[1]}?autoplay=0&rel=0&enablejsapi=1`;
+                }
+            }
+            return null;
+        }
+
+        function criarPlayerComFullscreen(embedUrl) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'video-wrapper';
+            const container = document.createElement('div');
+            container.className = 'video-container';
+            const iframe = document.createElement('iframe');
+            iframe.src = embedUrl;
+            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+            iframe.allowFullscreen = true;
+            container.appendChild(iframe);
+            const controls = document.createElement('div');
+            controls.className = 'video-controls';
+            const fsBtn = document.createElement('button');
+            fsBtn.className = 'fullscreen-btn';
+            fsBtn.innerHTML = '⛶ TELA CHEIA';
+            fsBtn.addEventListener('click', () => {
+                if (iframe.requestFullscreen) iframe.requestFullscreen();
+                else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+                else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
+            });
+            controls.appendChild(fsBtn);
+            wrapper.appendChild(container);
+            wrapper.appendChild(controls);
+            return wrapper;
+        }
+
+        async function carregarDados() {
+            try {
+                loadingEl.style.display = 'inline-block';
+                contadorSpan.innerText = '⏳ sincronizando...';
+                const response = await fetch(API_URL);
+                const dadosPlanilha = await response.json();
+                registrosMap.clear();
+                
+                if (dadosPlanilha && Array.isArray(dadosPlanilha) && dadosPlanilha.length > 1) {
+                    for (let i = 1; i < dadosPlanilha.length; i++) {
+                        const row = dadosPlanilha[i];
+                        if (row && row[0]) {
+                            const num = String(row[0]).trim();
+                            // Só adiciona se tiver pelo menos uma informação relevante (imagem, link ou descrição)
+                            const temImagem = row[1] && row[1].trim() !== '';
+                            const temLink = row[2] && row[2].trim() !== '';
+                            const temDescricao = row[3] && row[3].trim() !== '';
+                            
+                            if (temImagem || temLink || temDescricao) {
+                                registrosMap.set(num, {
+                                    imagem: temImagem ? row[1].trim() : '',
+                                    link: temLink ? row[2].trim() : '',
+                                    descricao: temDescricao ? row[3].trim() : ''
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                registrosCount = registrosMap.size;
+                contadorSpan.innerText = `📦 ${registrosCount} elementos com dados completos`;
+                loadingEl.style.display = 'none';
+                renderizarTabelaPeriodica();
+            } catch (error) {
+                console.error('Erro ao carregar planilha:', error);
+                contadorSpan.innerText = '❌ erro ao conectar';
+                loadingEl.style.display = 'none';
+                renderizarTabelaPeriodica();
+            }
+        }
+
+        function renderizarTabelaPeriodica() {
+            gridEl.innerHTML = '';
+            for (let periodo = 1; periodo <= 10; periodo++) {
+                for (let grupo = 1; grupo <= 18; grupo++) {
+                    const elemento = elementosCompletos.find(e => e.periodo === periodo && e.grupo === grupo);
+                    if (elemento) {
+                        const card = document.createElement('div');
+                        card.className = 'element-card';
+                        const numStr = String(elemento.num);
+                        // SOMENTE SE EXISTIR NO MAP (ou seja, se tiver dados) recebe a classe "com-dados"
+                        if (registrosMap.has(numStr)) {
+                            card.classList.add('com-dados');
+                        }
+                        card.setAttribute('data-num', elemento.num);
+                        card.innerHTML = `
+                            <span class="element-number">${elemento.num}</span>
+                            <span class="element-symbol">${elemento.simbolo}</span>
+                            <span class="element-name">${elemento.nome}</span>
+                        `;
+                        card.addEventListener('click', () => abrirModal(elemento.num));
+                        gridEl.appendChild(card);
+                    } else {
+                        const vazio = document.createElement('div');
+                        vazio.className = 'empty-cell';
+                        gridEl.appendChild(vazio);
+                    }
+                }
+            }
+        }
+
+        function abrirModal(num) {
+            const elemento = elementosCompletos.find(e => e.num == num);
+            if (!elemento) return;
+            
+            const dados = registrosMap.get(String(num)) || { imagem: '', link: '', descricao: '' };
+            const temImagem = dados.imagem && dados.imagem.trim() !== '';
+            const temLink = dados.link && dados.link.trim() !== '';
+            const massa = massasAtomicas[num] || '—';
+            const youtubeEmbed = temLink ? getYouTubeEmbedUrl(dados.link) : null;
+            const isCanva = temLink && isCanvaLink(dados.link);
+            const temDescricao = dados.descricao && dados.descricao.trim() !== '';
+
+            let imagemHtml = '';
+            if (temImagem) {
+                imagemHtml = `<img src="${dados.imagem}" alt="${elemento.nome}" style="cursor:pointer;" title="Clique para ampliar" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'placeholder-img-full\\'>🧪</div>';">`;
+            } else {
+                imagemHtml = '<div class="placeholder-img-full">⚛️</div>';
+            }
+
+            let videoHtml = '';
+            if (youtubeEmbed) {
+                const playerEl = criarPlayerComFullscreen(youtubeEmbed);
+                const temp = document.createElement('div');
+                temp.appendChild(playerEl);
+                videoHtml = `<div class="video-player-full">${temp.innerHTML}</div>`;
+            } else if (temLink && isCanva) {
+                videoHtml = `
+                    <div class="sem-video">
+                        <span>🎨 Conteúdo do Canva</span>
+                        <a href="${dados.link}" target="_blank" class="botao-abrir-externo">
+                            🖼️ Abrir no Canva
+                        </a>
+                        <div class="aviso-canva">⚠️ O Canva não permite incorporação em outras páginas. O conteúdo será aberto em uma nova guia.</div>
+                    </div>
+                `;
+            } else if (temLink && !isCanva) {
+                videoHtml = `
+                    <div class="sem-video">
+                        <span>🔗 Link disponível</span>
+                        <a href="${dados.link}" target="_blank" class="botao-abrir-externo">
+                            🌐 Abrir link do Vídeo.
+                        </a>
+                    </div>
+                `;
+            } else {
+                videoHtml = '<div class="sem-video">🎬 Nenhum vídeo cadastrado para este elemento</div>';
+            }
+
+            const descricaoHtml = temDescricao ? dados.descricao : '📄 Nenhuma descrição cadastrada para este elemento.';
+
+            modalContent.innerHTML = `
+                <div class="modal-header-full">
+                    <span class="modal-titulo-full">${elemento.simbolo} · ${elemento.nome}</span>
+                    <button class="fechar-modal-full" onclick="document.getElementById('elementoModal').close()">✕ FECHAR</button>
+                </div>
+                <div class="modal-grid">
+                    <div class="coluna-esquerda">
+                        <div class="propriedades-full">
+                            <div class="prop-item">
+                                <div class="prop-label">Número atômico</div>
+                                <span class="prop-valor">${elemento.num}</span>
+                            </div>
+                            <div class="prop-item">
+                                <div class="prop-label">Massa atômica</div>
+                                <span class="prop-valor">${massa}</span><span class="prop-unidade">u</span>
+                            </div>
+                        </div>
+                        <div class="imagem-full" id="imagemZoomavel">
+                            ${imagemHtml}
+                        </div>
+                    </div>
+                    <div class="coluna-direita">
+                        ${videoHtml}
+                        <div class="descricao-full">
+                            ${descricaoHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const imgDiv = document.getElementById('imagemZoomavel');
+            if (imgDiv && temImagem) {
+                const imgElement = imgDiv.querySelector('img');
+                if (imgElement) {
+                    imgElement.style.cursor = 'pointer';
+                    imgElement.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        abrirZoomImagem(dados.imagem);
+                    });
+                }
+            }
+
+            modal.showModal();
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) modal.close();
+            }, { once: true });
+        }
+
+        window.onload = () => {
+            carregarDados();
+        };
+    })();
+</script>
+</body>
+</html>
